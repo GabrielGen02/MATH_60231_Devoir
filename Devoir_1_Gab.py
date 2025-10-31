@@ -175,7 +175,7 @@ var_es_para(df_gabriel, alpha=0.01) # pour 1 %
 para = var_es_para(df_gabriel, alpha=0.05)
 histo = var_es_histo(df_gabriel, alpha=0.05)
 
-# différence entr ele modèle historique et paramétrique
+# différence entre le modèle historique et paramétrique
 for t in para:
     diff_var = histo[t]['VaR'] - para[t]['VaR']
     diff_es = histo[t]['Es'] - para[t]['Es']
@@ -254,13 +254,103 @@ for tkr in ['GOOGL', 'SPY', 'GNE']:
 
 # --- Question 2 (f) ---
 
+# calcule du nombre de violations pour les 3 modèles (nb de jours ou le rend est inférieur à la VaR)
+
+# Série de rendements utilisée pour les violations
+ret_series = var_dyn[tkr]['ret']  # rendements quotidiens alignés dans le temps
+
+# pour le modèle en simulation historique 
+VaR_histo = var_histo[tkr]['VaR']
+violation_histo = float((ret_series < VaR_histo).sum())
+
+# pour le modèle paramétrique 
+VaR_para = var_gauss[tkr]["VaR"]
+violation_para = float((ret_series < VaR_para).sum())
+
+# pour le modèle variant dans le temps 
+violations_dyn = float((var_dyn[tkr]['ret'] < var_dyn[tkr]['VaR']).sum())
+
+# affichage des résultats 
+violations_dict = {
+    "violation_histo": violation_histo,
+    "violation_para": violation_para,
+    "violation_dyn": violations_dyn
+}
+
+for v in violations_dict : 
+    print(f"Le nombre de violations du modèle {v} est de {violations_dict[v]}")
+
+# calcule de nb d'observations par ticker 
+tickers = ['GOOGL', 'GNE', 'SPY']
+
+for tkr in tickers:
+    n_obs = len(df_gabriel[df_gabriel['ticker'] == tkr])
+    print(f"{tkr} a {n_obs} observations")
+
+# calcule de la statistique de test 
+def stat_test_couverture(violations_dict, T=2769, alpha=0.05):
+    stats = {}
+    " calcule du numérateur puis de dénominateur puis de la stat de test"
+    for v in violations_dict:
+        nb_violations = violations_dict[v]
+        nume = nb_violations - (alpha * T)
+        denomi = (alpha * (1 - alpha) * T) ** 0.5
+        S = nume / denomi
+        stats[v] = round(S, 3)
+    return stats
+
+stats_test = stat_test_couverture(violations_dict, T=2769, alpha=0.05)
+print(stats_test) # résultats 
+
+# --- Question 2 (f) ---
+
+# fonction donnant le nombres de switch entre violation et non violation 
+def test_sequence(ret_series, VaR):   
+    # Séquence binaire : 1 si violation, 0 sinon
+    sequence = (ret_series < VaR).astype(int).values # créer une liste avec 1 = violation, 0 sinon
+
+    # Comptage des états
+    n0 = np.sum(sequence == 0)
+    n1 = np.sum(sequence == 1)
+
+    # Transitions entre états (0 à 1 ou 1 à 0)
+    transitions = np.sum(sequence[1:] != sequence[:-1])
+
+    # Nombre attendu de transitions
+    expected = 2 * n0 * n1 / (n0 + n1)
+
+    return {
+        'n0': n0,
+        'n1': n1,
+        'transitions_observées': transitions,
+        'transitions_attendues': round(expected, 2),
+        'clustering': transitions < expected
+    }
+
+tickers = ['GOOGL', 'SPY', 'GNE']
+
+# pour modèle historique
+for tkr in tickers:
+    result = test_sequence(var_dyn[tkr]['ret'], VaR_histo)
+    print(f"{tkr} - transitions observées (historique) : {result['transitions_observées']}")
+    print(f"{tkr} - transitions attendues (historique) : {result['transitions_attendues']}")
+
+# pour modèle paramétrique
+for tkr in tickers:
+    result = test_sequence(var_dyn[tkr]['ret'], VaR_para)
+    print(f"{tkr} - transitions observées (paramétrique) : {result['transitions_observées']}")
+    print(f"{tkr} - transitions attendues (paramétrique) : {result['transitions_attendues']}")
+
+# pour modèle variant dans le temps
+for tkr in tickers:
+    result = test_sequence(var_dyn[tkr]['ret'], var_dyn[tkr]['VaR'])
+    print(f"{tkr} - transitions observées (variation dans le temps) : {result['transitions_observées']}")
+    print(f"{tkr} - transitions attendues (variation dans le temps) : {result['transitions_attendues']}")
 
 
-
-
-
-
-
+# ──────────────────────────────────────────── # 
+# ──────────── fin du problème 2 ───────────── # 
+# ──────────────────────────────────────────── # 
 
 
 
