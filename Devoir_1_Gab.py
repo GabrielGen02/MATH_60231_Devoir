@@ -62,6 +62,13 @@ tickers_gabriel = ['SPY', 'GS', 'GOOGL', 'GNE']
 df_gabriel = get_prices(db, tickers_gabriel)
 print(df_gabriel.head()) # vision rapide du df 
 
+# création d'un df avec des actions commencant par T et B 
+tickers_bernabe = ["BAC", "BB", "BP"] # B
+df_bernar = get_prices(db, tickers_bernabe)
+
+tickers_tom = ["TD", "TXN", "TRP"] # T 
+df_tom = get_prices(db, tickers_tom)
+
 # validation que les dates du df sont conformes a l'énoncé
 def filtrage_dates(df) : 
     # filtrage des dates du df 
@@ -71,7 +78,10 @@ def filtrage_dates(df) :
     print(df['date'].max())
     
     return df 
+
 df_gabriel = filtrage_dates(df_gabriel)
+df_ber = filtrage_dates(df_bernar)
+df_tom = filtrage_dates(df_tom)
 
 # --- Question 2 (a) ---
 
@@ -104,6 +114,8 @@ def tracer_rendements(df, x_col='date', y_col='ret', ticker_col='ticker'):
         plt.show()
 
 tracer_rendements(df_gabriel) # graphique des rendement pour df_gabriel
+tracer_rendements(df_ber)
+tracer_rendements(df_tom)
 
 # fonction qui calcule les statistiques descriptives des actions 
 def stat_descriptive(df) : 
@@ -118,11 +130,13 @@ def stat_descriptive(df) :
         print(ret.describe())
 
 stat_descriptive(df_gabriel)
+stat_descriptive(df_ber)
+stat_descriptive(df_tom)
 
 # --- Question 2 (b) ---
 
 # préparation des données pour la question 2 (b) 
-df_gabriel = df_gabriel[df_gabriel['ticker'] != 'GM'] # exclusion de l'action fesant parti du secteur bancaire 
+df_gabriel = df_gabriel[df_gabriel['ticker'] != 'GS'] # exclusion de l'action fesant parti du secteur bancaire 
 
 # calcule du VaR historique 
 def var_es_histo(df, alpha=0.05):
@@ -177,8 +191,8 @@ histo = var_es_histo(df_gabriel, alpha=0.05)
 
 # différence entre le modèle historique et paramétrique
 for t in para:
-    diff_var = histo[t]['VaR'] - para[t]['VaR']
-    diff_es = histo[t]['Es'] - para[t]['Es']
+    diff_var = abs(histo[t]['VaR']) - abs(para[t]['VaR'])
+    diff_es = abs(histo[t]['Es']) - abs(para[t]['Es'])
     print(f"{t} différence dans le VaR: {diff_var:.4f}, différence dans le ES: {diff_es:.4f}") 
 
 # --- Question 2 (d) ---
@@ -213,6 +227,7 @@ for tkr, df_plot in results.items():
     plt.plot(df_plot['date'], df_plot['ret'], label='Rendements', alpha=0.6)
     plt.plot(df_plot['date'], df_plot['VaR'], label='VaR dynamique', color='red')
     plt.title(f"VaR dynamique vs rendements pour {tkr}")
+    plt.xlabel("Date")
     plt.legend()
     plt.tight_layout()
     plt.show()
