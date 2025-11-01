@@ -426,6 +426,21 @@ violations = df_4["ret"] < var_5
 nb_violations_1 = violations.sum() # nb de vioaltions 
 dates_violations = df_4["date"][violations] # extration des dates 
 
+# test d'indépendance 
+from statsmodels.stats.diagnostic import acorr_ljungbox
+
+# Série booléenne des violations (rendement < VaR), convertie en 0/1
+violations = (df_4["ret"] < var_5).astype(int)
+
+# Supprimer les NaN (au début de la série, avant que la VaR soit définie)
+violations_clean = violations.dropna()
+
+# Test de Ljung-Box sur les 10 premiers lags
+test_indep = acorr_ljungbox(violations_clean, lags=500, return_df=True)
+
+print("\nTest d'indépendance des violations (Ljung-Box)")
+print(test_indep)
+
 # graphique illustrant les violations par rapport a la VaR et au rendement journalier 
 plt.figure(figsize=(12,6))
 plt.plot(df_4["date"], df_4["ret"], label="Rendements", color="blue")
@@ -469,7 +484,12 @@ plt.grid(False)
 plt.show()
 
 # différence entre les deux modèles 
-diff = abs(nb_violations_2 - nb_violations_1)
+diff = (nb_violations_1 - nb_violations_2)
+if diff < 0 : 
+    print("modele 2 fait plus de violations")
+else : 
+    print("modele 1 fait plus de violations")
+
 print(diff)
 print(nb_violations_1)
 print(nb_violations_2)
