@@ -423,6 +423,7 @@ var_5 = df_4["ret"].rolling(window=wind).quantile(0.05)
 
 # calcule le nombre de violation 
 violations = df_4["ret"] < var_5
+nb_violations_1 = violations.sum() # nb de vioaltions 
 dates_violations = df_4["date"][violations] # extration des dates 
 
 # graphique illustrant les violations par rapport a la VaR et au rendement journalier 
@@ -452,6 +453,7 @@ for t in range(250, len(rets)):
 
 # calcule le nombre de violation 
 violations = df_4["ret"] < var_expansive
+nb_violations_2 = violations.sum() # nb de violations 
 dates_violations = df_4["date"][violations] # extration des dates 
 
 # graphique illustrant les violations par rapport a la VaR et au rendement journalier 
@@ -466,6 +468,11 @@ plt.ylabel("Rendement")
 plt.grid(False)
 plt.show()
 
+# différence entre les deux modèles 
+diff = abs(nb_violations_2 - nb_violations_1)
+print(diff)
+print(nb_violations_1)
+print(nb_violations_2)
 
 # ──────────────────────────────────────────── # 
 # ──────────── fin du problème 4 ───────────── # 
