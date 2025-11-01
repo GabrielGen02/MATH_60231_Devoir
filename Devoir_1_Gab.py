@@ -367,6 +367,106 @@ for tkr in tickers:
 # ──────────── fin du problème 2 ───────────── # 
 # ──────────────────────────────────────────── # 
 
+# ──────────────────────────────────────────── # 
+# ──────────────── problème 4 ──────────────── # 
+# ──────────────────────────────────────────── # 
+
+# df et action choisit pour la question 4 
+tickers_4 = ["GOOGL"] # Bell
+df_4 = get_prices(db, tickers_4, start_date='2012-01-03', end_date='2023-01-03') # extration des données 
+df_4.head() # visualisation des données 
+
+# --- Question (a) --- 
+
+from scipy.stats import skew, kurtosis
+
+# fonction calculant les statistisques descriptives de bases 
+def stat_sommaire(df, prc='prc', ret='ret'):
+    """
+    Calcule et affiche les statistiques sommaires pour les prix et les rendements.
+
+    Args:
+        df (pd.DataFrame): DataFrame contenant les colonnes de prix et de rendements.
+        col_prix (str): Nom de la colonne des prix.
+        col_rendement (str): Nom de la colonne des rendements.
+    """
+    # Vérification des colonnes
+    if prc in df.columns:
+        prix = df[prc].dropna()
+        print("\n Statistiques sur les PRIX")
+        print(f"Moyenne: {prix.mean():.4f}")
+        print(f"Écart-type: {prix.std():.4f}")
+        print(f"Asymétrie: {skew(prix):.4f}")
+        print(f"Aplatissement (excès de kurtosis): {kurtosis(prix, fisher=True):.4f}")
+    else:
+        print(f" Colonne '{prc}' introuvable.")
+
+    if ret in df.columns:
+        rendement = df[ret].dropna()
+        print("\n Statistiques sur les RENDEMENTS")
+        print(f"Moyenne: {rendement.mean():.4f}")
+        print(f"Écart-type: {rendement.std():.4f}")
+        print(f"Asymétrie: {skew(rendement):.4f}")
+        print(f"Aplatissement (excès de kurtosis): {kurtosis(rendement, fisher=True):.4f}")
+    else:
+        print(f" Colonne '{ret}' introuvable.")
+
+df_4 = filtrage_dates(df_4) # définission de la période entre 2012 et 2023 
+res_sommaire = stat_sommaire(df_4, prc='prc', ret='ret')
+tracer_rendements(df_4)
+
+# --- Question (b) --- 
+
+# calcule de la VaR avec une fenêtre de 250 jours 
+wind = 250 # grosseur de la fenetre 
+var_5 = df_4["ret"].rolling(window=wind).quantile(0.05)
+
+# calcule le nombre de violation 
+violations = df_4["ret"] < var_5
+dates_violations = df_4["date"][violations] # extration des dates 
+
+# graphique illustrant les violations par rapport a la VaR et au rendement journalier 
+plt.figure(figsize=(12,6))
+plt.plot(df_4["date"], df_4["ret"], label="Rendements", color="blue")
+plt.plot(df_4["date"], var_5, label="VaR 5%", color="red")
+plt.scatter(df_4["date"][violations], df_4["ret"][violations], color="black", label="Violations", marker=".")
+plt.legend()
+plt.title("VaR historique à 5% vs Rendements")
+plt.xlabel("Date")
+plt.ylabel("Rendement")
+plt.grid(False)
+plt.show()
+
+# --- Question (C) --- 
+
+# Série de rendements propre
+rets = df_4["ret"]
+
+# Initialiser la liste
+var_expansive = [np.nan] * len(rets)
+
+# Boucle expansive
+for t in range(250, len(rets)):
+    window = rets[:t]  # Tous les rendements jusqu'à t-1
+    var_expansive[t] = np.percentile(window, 5)
+
+# calcule le nombre de violation 
+violations = df_4["ret"] < var_expansive
+dates_violations = df_4["date"][violations] # extration des dates 
+
+# graphique illustrant les violations par rapport a la VaR et au rendement journalier 
+plt.figure(figsize=(12,6))
+plt.plot(df_4["date"], df_4["ret"], label="Rendements", color="blue")
+plt.plot(df_4["date"], var_expansive, label="VaR 5%", color="red")
+plt.scatter(df_4["date"][violations], df_4["ret"][violations], color="black", label="Violations", marker=".")
+plt.legend()
+plt.title("VaR historique à 5% vs Rendements")
+plt.xlabel("Date")
+plt.ylabel("Rendement")
+plt.grid(False)
+plt.show()
 
 
-
+# ──────────────────────────────────────────── # 
+# ──────────── fin du problème 4 ───────────── # 
+# ──────────────────────────────────────────── #
